@@ -30,8 +30,8 @@ params:
   ShowPostNavLinks: true
   defaultTheme: auto # to switch between dark or light according to browser theme
   homeInfoParams:
-    Title: Hi there wave
-    Content: Can be Info, links, about...
+    Title: Hello there 👋
+    Content: A collection of things I find interesting in the areas of technology, networking, and cybersecurity.
   socialIcons: # optional
     - name: "github"
       url: "https://github.com/dgoenrique"
