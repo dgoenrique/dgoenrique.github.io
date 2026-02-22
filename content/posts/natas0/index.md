@@ -1,6 +1,6 @@
 ---
 date: '2026-01-21T21:58:03-03:00'
-draft: false
+draft: true
 title: 'OverTheWire: Natas 0 - Walkthrough'
 tags: ["Natas", "OverTheWire", "Walkthrough"]
 ShowToc: true
