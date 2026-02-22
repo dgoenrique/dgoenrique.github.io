@@ -25,6 +25,7 @@ outputs:
     - JSON
 
 params:
+  author: "dgoenrique"
   mainSections:
     - posts
   ShowPostNavLinks: true
