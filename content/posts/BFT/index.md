@@ -17,7 +17,7 @@ In this Sherlock, you will become acquainted with MFT (Master File Table) forens
 
 ## Artifacts Provided
 
-* BFT.zip (zip file), sha256: `b42e9db64f52e93aa6e929b7adf571c7ddbc746387d25747bba341c3aba52740`
+* BFT.zip (zip file), sha256: `4576e3f020b9f0a1744d88fadda8371efd7cfd4c8a9db17bafae21c14118a2e9`
 
 ## Initial Analysis
 
