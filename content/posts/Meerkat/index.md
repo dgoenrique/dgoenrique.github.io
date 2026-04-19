@@ -157,7 +157,7 @@ With this, we see all the 59 TCP conversations for the credential stuffing attac
 
 We can see in the Total Packets column that we have conversations with just 18 packets and requests with more than 50.
 
-![Packets Column](pktcol.png)
+![Packets Column](pktcol.png#center)
 
 We can use the Follow Stream button to inspect the conversation with more packets. That stream shows the successful login response after submitting credentials.
 
